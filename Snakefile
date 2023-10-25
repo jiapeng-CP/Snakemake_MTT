@@ -22,7 +22,7 @@ def get_fastq2(wildcards):
 
 rule all:
 	input:
-		expand("fastp/{sample}.json", sample=SAMPLES)
+		expand("map2rRNA/{sample}.sam", sample=SAMPLES)
         
 
 rule fastp:
@@ -51,3 +51,25 @@ rule fastp:
 		"--thread 8"
         
 
+rule rRNArm:
+	input:
+		r1 = "fastp/{sample}.r1.fq.gz",
+		r2 = "fastp/{sample}.r2.fq.gz"
+
+	output:
+		sam = "map2rRNA/{sample}.sam",
+		fq = "map2rRNA/{sample}_rRNA_rm.fastq.gz",
+		fq1 = "map2rRNA/{sample}_rRNA_rm.fastq.1.gz"
+
+	threads: 8
+
+	shell:
+		"mkdir -p map2rRNA \n"
+		"/home/jiapengc/.conda/envs/biobakery3/bin/bowtie2 -x /home/jiapengc/db/rRNA/rRNA.rfam.silva "
+		"-1 {input.r1} -2 {input.r2} "
+		"-S {output.sam} "
+		"--sensitive --threads 8 "
+		"--un-conc-gz {output.fq}"
+
+#/home/jiapengc/.conda/envs/QC/bin/samtools view -bhS --threads 5 out.sam > out.bam
+#/home/jiapengc/bin/bamstats --cpu 5 --input out.bam > bamstat.json
