@@ -58,10 +58,11 @@ rule rRNArm:
 
 	output:
 		sam = "map2rRNA/{sample}.sam",
-		fq = "map2rRNA/{sample}_rRNA_rm.fastq.gz",
 		fq1 = "map2rRNA/{sample}_rRNA_rm.fastq.1.gz"
 
 	threads: 8
+
+	params: sp = get_sample
 
 	shell:
 		"mkdir -p map2rRNA \n"
@@ -69,7 +70,7 @@ rule rRNArm:
 		"-1 {input.r1} -2 {input.r2} "
 		"-S {output.sam} "
 		"--sensitive --threads 8 "
-		"--un-conc-gz {output.fq}"
+		"--un-conc-gz map2rRNA/{params.sp}_rRNA_rm.fastq.gz"
 
 #/home/jiapengc/.conda/envs/QC/bin/samtools view -bhS --threads 5 out.sam > out.bam
 #/home/jiapengc/bin/bamstats --cpu 5 --input out.bam > bamstat.json
