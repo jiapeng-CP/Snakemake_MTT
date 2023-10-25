@@ -22,7 +22,7 @@ def get_fastq2(wildcards):
 
 rule all:
 	input:
-		expand("map2rRNA/{sample}.sam", sample=SAMPLES)
+		expand("map2human/{sample}.sam", sample=SAMPLES)
         
 
 rule fastp:
@@ -74,3 +74,26 @@ rule rRNArm:
 
 #/home/jiapengc/.conda/envs/QC/bin/samtools view -bhS --threads 5 out.sam > out.bam
 #/home/jiapengc/bin/bamstats --cpu 5 --input out.bam > bamstat.json
+
+
+rule map2human:
+	input:
+		r1 = "map2rRNA/{sample}_rRNA_rm.fastq.1.gz",
+		r2 = "map2rRNA/{sample}_rRNA_rm.fastq.2.gz"
+
+	output:
+		fq1 = "map2human/{sample}_human_rm.fastq.1.gz",
+		sam = "map2human/{sample}.sam"
+	threads: 8
+	params: sp = get_sample
+
+	shell:
+		"mkdir -p map2human \n"
+		"/home/jiapengc/.conda/envs/biobakery3/bin/bowtie2 -x /home/jiapengc/db/chm13.draft_v1.0_plusY/chm13.draft_v1.0_plusY "
+		"-1 {input.r1} -2 {input.r2} "
+		"-S {output.sam} "
+		"--sensitive --threads 8 "
+		"--un-conc-gz map2human/{params.sp}_human_rm.fastq.gz"
+
+
+
