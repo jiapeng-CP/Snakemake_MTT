@@ -22,7 +22,8 @@ def get_fastq2(wildcards):
 
 rule all:
 	input:
-		expand("map2human/{sample}.sam", sample=SAMPLES)
+		expand("map2rRNA/{sample}.json", sample=SAMPLES),
+		#expand("map2human/{sample}.json", sample=SAMPLES)
         
 
 rule fastp:
@@ -72,11 +73,22 @@ rule rRNArm:
 		"--sensitive --threads 8 "
 		"--un-conc-gz map2rRNA/{params.sp}_rRNA_rm.fastq.gz"
 
-#/home/jiapengc/.conda/envs/QC/bin/samtools view -bhS --threads 5 out.sam > out.bam
-#/home/jiapengc/bin/bamstats --cpu 5 --input out.bam > bamstat.json
 
 
-rule map2human:
+rule rRNAstat:
+	input:
+		sam = "map2rRNA/{sample}.sam"
+	output:
+		json = "map2rRNA/{sample}.json"
+	threads: 4
+	params: sp = get_sample
+	shell:
+		"/home/jiapengc/.conda/envs/QC/bin/samtools view -bhS --threads 4 {input.sam} > map2rRNA/{params.sp}.bam \n"
+		"/home/jiapengc/bin/bamstats --cpu 4 --input map2rRNA/{params.sp}.bam > {output.json}"
+
+
+
+rule rmHuman:
 	input:
 		r1 = "map2rRNA/{sample}_rRNA_rm.fastq.1.gz",
 		r2 = "map2rRNA/{sample}_rRNA_rm.fastq.2.gz"
@@ -97,3 +109,13 @@ rule map2human:
 
 
 
+rule humanStat:
+	input:
+		sam = "map2human/{sample}.sam"
+	output:
+		json = "map2human/{sample}.json"
+	threads: 4
+	params: sp = get_sample
+	shell:
+		"/home/jiapengc/.conda/envs/QC/bin/samtools view -bhS --threads 4 {input.sam} > map2human/{params.sp}.bam \n"
+		"/home/jiapengc/bin/bamstats --cpu 4 --input map2human/{params.sp}.bam > {output.json}"
