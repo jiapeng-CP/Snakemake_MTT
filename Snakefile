@@ -67,7 +67,8 @@ rule rRNArm:
 
 	shell:
 		"mkdir -p map2rRNA \n"
-		"/home/jiapengc/.conda/envs/biobakery3/bin/bowtie2 -x /home/jiapengc/db/rRNA/rRNA.rfam.silva "
+		#"/home/jiapengc/.conda/envs/biobakery3/bin/bowtie2 -x /home/jiapengc/db/rRNA/rRNA.rfam.silva "
+		"/home/jiapengc/.conda/envs/biobakery3/bin/bowtie2 -x /home/jiapengc/db/SILVA_128_LSUParc_SSUParc_ribosomal_RNA/SILVA_128_LSUParc_SSUParc_ribosomal_RNA.1.bt2l "
 		"-1 {input.r1} -2 {input.r2} "
 		"-S {output.sam} "
 		"--sensitive --threads 8 "
