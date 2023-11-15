@@ -22,11 +22,11 @@ def get_fastq2(wildcards):
 
 rule all:
 	input:
-		expand("map2rRNA/{sample}.json", sample=SAMPLES),
+		expand("fastp/{sample}.AfQC.json", sample=SAMPLES),
 		#expand("map2human/{sample}.json", sample=SAMPLES)
         
 
-rule fastp:
+rule fastpBfQC:
 	input:
 		r1 = get_fastq1,
 		r2 = get_fastq2
@@ -47,8 +47,8 @@ rule fastp:
 		"--in2 {input.r2} "
 		"--out1 {output.r1} "
 		"--out2 {output.r2} "
-		"--json {output.json} "
-		"--html {output.html} "
+		"--json {output.BfQC.json} "
+		"--html {output.BfQC.html} "
 		"--thread 8"
         
 
@@ -59,7 +59,8 @@ rule rRNArm:
 
 	output:
 		sam = "map2rRNA/{sample}.sam",
-		fq1 = "map2rRNA/{sample}_rRNA_rm.fastq.1.gz"
+		fq1 = "map2rRNA/{sample}_rRNA_rm.fastq.1.gz",
+		fq2 = "map2rRNA/{sample}_rRNA_rm.fastq.2.gz"
 
 	threads: 8
 
@@ -68,7 +69,7 @@ rule rRNArm:
 	shell:
 		"mkdir -p map2rRNA \n"
 		#"/home/jiapengc/.conda/envs/biobakery3/bin/bowtie2 -x /home/jiapengc/db/rRNA/rRNA.rfam.silva "
-		"/home/jiapengc/.conda/envs/biobakery3/bin/bowtie2 -x /home/jiapengc/db/SILVA_128_LSUParc_SSUParc_ribosomal_RNA/SILVA_128_LSUParc_SSUParc_ribosomal_RNA.1.bt2l "
+		"/home/jiapengc/.conda/envs/biobakery3/bin/bowtie2 -x /home/jiapengc/db/SILVA_128_LSUParc_SSUParc_ribosomal_RNA/SILVA_128_LSUParc_SSUParc_ribosomal_RNA "
 		"-1 {input.r1} -2 {input.r2} "
 		"-S {output.sam} "
 		"--sensitive --threads 8 "
@@ -96,6 +97,7 @@ rule rmHuman:
 
 	output:
 		fq1 = "map2human/{sample}_human_rm.fastq.1.gz",
+		fq2 = "map2human/{sample}_human_rm.fastq.2.gz",
 		sam = "map2human/{sample}.sam"
 	threads: 8
 	params: sp = get_sample
@@ -120,3 +122,26 @@ rule humanStat:
 	shell:
 		"/home/jiapengc/.conda/envs/QC/bin/samtools view -bhS --threads 4 {input.sam} > map2human/{params.sp}.bam \n"
 		"/home/jiapengc/bin/bamstats --cpu 4 --input map2human/{params.sp}.bam > {output.json}"
+
+
+rule fastpAfQC:
+	input:
+		r1 = "map2human/{sample}_human_rm.fastq.1.gz",
+		r2 = "map2human/{sample}_human_rm.fastq.2.gz"
+
+	output: #https://github.com/OpenGene/fastp/issues/164
+		json = "fastp/{sample}.AfQC.json",
+		html = "fastp/{sample}.AfQC.html"
+
+	log: "logs/{sample}.fastp.log"
+	threads: 8
+	params:
+		sn = get_sample
+	shell:
+		"mkdir -p fastp \n"
+		"/home/jiapengc/.conda/envs/QC/bin/fastp "
+		"--in1 {input.r1} "
+		"--in2 {input.r2} "
+		"--json {output.json} "
+		"--html {output.html} "
+		"--thread 8"
