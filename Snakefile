@@ -22,7 +22,7 @@ def get_fastq2(wildcards):
 
 rule all:
 	input:
-		expand("fastp/{sample}.AfQC.json", sample=SAMPLES),
+		expand("map2HOMD/{sample}.json", sample=SAMPLES),
 		#expand("map2human/{sample}.json", sample=SAMPLES)
         
 
@@ -145,3 +145,37 @@ rule fastpAfQC:
 		"--json {output.json} "
 		"--html {output.html} "
 		"--thread 8"
+
+
+rule map2HOMD:
+	input:
+		fq1 = "map2human/{sample}_human_rm.fastq.1.gz",
+		fq2 = "map2human/{sample}_human_rm.fastq.2.gz"
+
+	output:
+		sam = "map2HOMD/{sample}.sam"
+
+	threads: 8
+	params: sp = get_sample
+
+	shell:
+		"mkdir -p map2HOMD \n"
+		"/home/jiapengc/.conda/envs/biobakery3/bin/bowtie2 -x /home/jiapengc/db/HOMD/ALL_genomes.fna "
+		"-1 {input.fq1} -2 {input.fq2} "
+		"-S {output.sam} "
+		"--sensitive --threads 8 "
+
+
+
+rule HOMDstat:
+	input:
+		sam = "map2HOMD/{sample}.sam"
+	output:
+		json = "map2HOMD/{sample}.json"
+	threads: 4
+	params: sp = get_sample
+	shell:
+		"/home/jiapengc/.conda/envs/QC/bin/samtools view -bhS --threads 4 {input.sam} > map2HOMD/{params.sp}.bam \n"
+		"/home/jiapengc/bin/bamstats --cpu 4 --input map2HOMD/{params.sp}.bam > {output.json} \n"
+		#"samtools sort map2HOMD/{params.sp}.bam -o map2HOMD/{params.sp}.s.bam "
+		#"/home/artemisl/.conda/envs/biobakery/bin/samtools coverage map2HOMD/{params.sp}.s.bam > {params.sp}.ref.coverage "
