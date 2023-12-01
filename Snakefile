@@ -22,8 +22,7 @@ def get_fastq2(wildcards):
 
 rule all:
 	input:
-		expand("map2HOMD/{sample}.json", sample=SAMPLES),
-		#expand("map2human/{sample}.json", sample=SAMPLES)
+		expand("map2rRNA/{sample}.json", sample=SAMPLES),
         
 
 rule fastpBfQC:
@@ -34,8 +33,8 @@ rule fastpBfQC:
 	output:
 		r1 = "fastp/{sample}.r1.fq.gz",
 		r2 = "fastp/{sample}.r2.fq.gz",
-		json = "fastp/{sample}.json",
-		html = "fastp/{sample}.html"
+		json = "fastp/{sample}.BfQC.json",
+		html = "fastp/{sample}.BfQC.html"
 
 	log: "logs/{sample}.fastp.log"
 	threads: 8
@@ -47,8 +46,8 @@ rule fastpBfQC:
 		"--in2 {input.r2} "
 		"--out1 {output.r1} "
 		"--out2 {output.r2} "
-		"--json {output.BfQC.json} "
-		"--html {output.BfQC.html} "
+		"--json {output.json} "
+		"--html {output.html} "
 		"--thread 8"
         
 
