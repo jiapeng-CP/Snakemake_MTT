@@ -11,9 +11,6 @@ for x in samplesDF.index:
 	sampleFq1[x] = samplesDF.loc[x,'fq1']
 	sampleFq2[x] = samplesDF.loc[x,'fq2']
 
-def get_sample(wildcards):
-	return(wildcards.sample)
-
 def get_fastq1(wildcards):
 	return(samplesDF.loc[wildcards.sample,'fq1'])
 
@@ -22,7 +19,7 @@ def get_fastq2(wildcards):
 
 rule all:
 	input:
-		expand("map2rRNA/{sample}.json", sample=SAMPLES),
+		expand("map2HOMD/{sample}.json", sample=SAMPLES),
         
 
 rule fastpBfQC:
@@ -38,8 +35,6 @@ rule fastpBfQC:
 
 	log: "logs/{sample}.fastp.log"
 	threads: 8
-	params:
-		sn = get_sample
 	shell:
 		"mkdir -p fastp \n"
 		"/home/jiapengc/.conda/envs/QC/bin/fastp --in1 {input.r1} "
@@ -63,8 +58,6 @@ rule rRNArm:
 
 	threads: 8
 
-	params: sp = get_sample
-
 	shell:
 		"mkdir -p map2rRNA \n"
 		"/home/jiapengc/.conda/envs/biobakery3/bin/bowtie2 -x /home/jiapengc/db/rRNA/rRNA.rfam.silva "
@@ -72,7 +65,7 @@ rule rRNArm:
 		"-1 {input.r1} -2 {input.r2} "
 		"-S {output.sam} "
 		"--sensitive --threads 8 "
-		"--un-conc-gz map2rRNA/{params.sp}_rRNA_rm.fastq.gz"
+		"--un-conc-gz map2rRNA/{wildcards.sample}_rRNA_rm.fastq.gz"
 
 
 
@@ -82,10 +75,9 @@ rule rRNAstat:
 	output:
 		json = "map2rRNA/{sample}.json"
 	threads: 4
-	params: sp = get_sample
 	shell:
-		"/home/jiapengc/.conda/envs/QC/bin/samtools view -bhS --threads 4 {input.sam} > map2rRNA/{params.sp}.bam \n"
-		"/home/jiapengc/bin/bamstats --cpu 4 --input map2rRNA/{params.sp}.bam > {output.json}"
+		"/home/jiapengc/.conda/envs/QC/bin/samtools view -bhS --threads 4 {input.sam} > map2rRNA/{wildcards.sample}.bam \n"
+		"/home/jiapengc/bin/bamstats --cpu 4 --input map2rRNA/{wildcards.sample}.bam > {output.json}"
 
 
 
@@ -99,7 +91,6 @@ rule rmHuman:
 		fq2 = "map2human/{sample}_human_rm.fastq.2.gz",
 		sam = "map2human/{sample}.sam"
 	threads: 8
-	params: sp = get_sample
 
 	shell:
 		"mkdir -p map2human \n"
@@ -107,7 +98,7 @@ rule rmHuman:
 		"-1 {input.r1} -2 {input.r2} "
 		"-S {output.sam} "
 		"--sensitive --threads 8 "
-		"--un-conc-gz map2human/{params.sp}_human_rm.fastq.gz"
+		"--un-conc-gz map2human/{wildcards.sample}_human_rm.fastq.gz"
 
 
 
@@ -117,10 +108,9 @@ rule humanStat:
 	output:
 		json = "map2human/{sample}.json"
 	threads: 4
-	params: sp = get_sample
 	shell:
-		"/home/jiapengc/.conda/envs/QC/bin/samtools view -bhS --threads 4 {input.sam} > map2human/{params.sp}.bam \n"
-		"/home/jiapengc/bin/bamstats --cpu 4 --input map2human/{params.sp}.bam > {output.json}"
+		"/home/jiapengc/.conda/envs/QC/bin/samtools view -bhS --threads 4 {input.sam} > map2human/{wildcards.sample}.bam \n"
+		"/home/jiapengc/bin/bamstats --cpu 4 --input map2human/{wildcards.sample}.bam > {output.json}"
 
 
 rule fastpAfQC:
@@ -134,8 +124,6 @@ rule fastpAfQC:
 
 	log: "logs/{sample}.fastp.log"
 	threads: 8
-	params:
-		sn = get_sample
 	shell:
 		"mkdir -p fastp \n"
 		"/home/jiapengc/.conda/envs/QC/bin/fastp "
@@ -155,7 +143,6 @@ rule map2HOMD:
 		sam = "map2HOMD/{sample}.sam"
 
 	threads: 8
-	params: sp = get_sample
 
 	shell:
 		"mkdir -p map2HOMD \n"
@@ -172,9 +159,8 @@ rule HOMDstat:
 	output:
 		json = "map2HOMD/{sample}.json"
 	threads: 4
-	params: sp = get_sample
 	shell:
-		"/home/jiapengc/.conda/envs/QC/bin/samtools view -bhS --threads 4 {input.sam} > map2HOMD/{params.sp}.bam \n"
-		"/home/jiapengc/bin/bamstats --cpu 4 --input map2HOMD/{params.sp}.bam > {output.json} \n"
-		#"samtools sort map2HOMD/{params.sp}.bam -o map2HOMD/{params.sp}.s.bam "
-		#"/home/artemisl/.conda/envs/biobakery/bin/samtools coverage map2HOMD/{params.sp}.s.bam > {params.sp}.ref.coverage "
+		"/home/jiapengc/.conda/envs/QC/bin/samtools view -bhS --threads 4 {input.sam} > map2HOMD/{wildcards.sample}.bam \n"
+		"/home/jiapengc/bin/bamstats --cpu 4 --input map2HOMD/{wildcards.sample}.bam > {output.json} \n"
+		#"samtools sort map2HOMD/{sample}.bam -o map2HOMD/{sample}.s.bam "
+		#"/home/artemisl/.conda/envs/biobakery/bin/samtools coverage map2HOMD/{sample}.s.bam > {sample}.ref.coverage "
